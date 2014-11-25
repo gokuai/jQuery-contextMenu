@@ -128,8 +128,8 @@ var // currently active contextMenu trigger
             // correct offset if viewport demands it
             var bottom = $win.scrollTop() + $win.height(),
                 right = $win.scrollLeft() + $win.width(),
-                height = opt.$menu.height(),
-                width = opt.$menu.width();
+                height = opt.$menu.outerHeight(),
+                width = opt.$menu.outerWidth();
             
             if (offset.top + height > bottom) {
                 offset.top -= height;
@@ -158,6 +158,22 @@ var // currently active contextMenu trigger
                     top: 0,
                     left: this.outerWidth()
                 };
+                var offsetParent = $menu.offsetParent();
+                var offsetParentPosition = offsetParent.offset();
+                var bottom = $win.scrollTop() + $win.height(),
+                    right = $win.scrollLeft() + $win.width(),
+                    height = $menu.outerHeight(),
+                    width = $menu.outerWidth();
+
+                if (offset.top+offsetParentPosition.top + height > bottom) {
+                    offset.top -= height;
+                    offset.top += offsetParent.outerHeight();
+                }
+
+                if (offset.left+offsetParentPosition.left + width > right) {
+                    offset.left -= width;
+                    offset.left -= offsetParent.outerWidth();
+                }
                 $menu.css(offset);
             }
         },
@@ -810,7 +826,7 @@ var // currently active contextMenu trigger
 
             // make sure we're in front
             if (opt.zIndex) {
-                css.zIndex = zindex($trigger) + opt.zIndex;
+                css.zIndex = zindex($trigger) + opt.zIndex*10;
             }
             
             // add layer
@@ -935,7 +951,7 @@ var // currently active contextMenu trigger
             
             // create contextMenu items
             $.each(opt.items, function(key, item){
-                var $t = $('<li class="context-menu-item"></li>').addClass(item.className || ""),
+                var $t = $('<li class="context-menu-item" title="'+item.name+'"></li>').addClass(item.className || ""),
                     $label = null,
                     $input = null;
                 
@@ -1040,7 +1056,13 @@ var // currently active contextMenu trigger
                         
                         case 'sub':
                             // FIXME: shouldn't this .html() be a .text()?
-                            $('<span></span>').html(item._name || item.name).appendTo($t);
+                            var icon = '';
+                            if(typeof item.icon !=='undefined'){
+                                icon = '<i class="icon16x16 '+item.icon+'"></i>';
+                            }
+                            var accesskey = '<span class="accesskey">'+(item.accesskeyText||'')+'</span>';
+                            var text = '<span>'+(item._name || item.name || "")+'</span>';
+                            $(icon+text+accesskey).appendTo($t);
                             item.appendTo = item.$node;
                             op.create(item, root);
                             $t.data('contextMenu', item).addClass('context-menu-submenu');
@@ -1059,7 +1081,14 @@ var // currently active contextMenu trigger
                                 }
                             });
                             // FIXME: shouldn't this .html() be a .text()?
-                            $('<span></span>').html(item._name || item.name || "").appendTo($t);
+                            var icon = '';
+                            if(typeof item.icon !=='undefined'){
+                                icon = '<i class="icon16x16 '+item.icon+'"></i>';
+                            }
+                            var accesskey = '<span class="accesskey">'+(item.accesskeyText||'')+'</span>';
+                            var text = '<span>'+(item._name || item.name || "")+'</span>';
+
+                            $(icon+text+accesskey).appendTo($t);
                             break;
                     }
                     
@@ -1075,9 +1104,9 @@ var // currently active contextMenu trigger
                     }
                 
                     // add icons
-                    if (item.icon) {
-                        $t.addClass("icon icon-" + item.icon);
-                    }
+//                    if (item.icon) {
+//                        $t.addClass("icon icon-" + item.icon);
+//                    }
                 }
                 
                 // cache contained elements
@@ -1277,7 +1306,7 @@ $.contextMenu = function(operation, options) {
                 throw new Error('Cannot bind to selector "' + o.selector + '" as it contains a reserved className');
             }
             if (!o.build && (!o.items || $.isEmptyObject(o.items))) {
-                throw new Error('No Items specified');
+                //throw new Error('No Items sepcified');
             }
             counter ++;
             o.ns = '.contextMenu' + counter;
